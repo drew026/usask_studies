@@ -8,13 +8,16 @@ Description : Main is used to test the functionality of various tools in sub-pac
 
 from api_tools import xDD_api as api
 from gplates_tools import track_point
+from fuzzy_tools import fuzzy as fz
 import time
 import sys
+import pandas as pd
 sys.path.append('C:\\USask Python')
 from sqlalchemy import create_engine
 from config import passwords as user
 
 ###############################################################################################################
+''' API transform pipeline testing code'''
 ### Variables Block for api_tools ###
 username = user.username
 password = user.password
@@ -51,7 +54,6 @@ headers = {}
 date = time.strftime("%Y-%m-%d__%H-%M-%S")    # Date in exact time to attach to output filename                
 output_file = 'output/' + date + ' api_output.csv'
 ###############################################################################################################
-''' API transform pipeline testing code'''
 #data = api.request_api(xDD,params,headers)
 #df = api.get_df_xDD_articles(data)
 #df = api.transform_pipeline_to_DDB(df, "intrusion breccias")
@@ -60,14 +62,12 @@ output_file = 'output/' + date + ' api_output.csv'
 ##postgreSQLConnection = engine.connect()
 ##df.to_sql('article_metadata', postgreSQLConnection, if_exists='append', index=False)
 #
-#
-#
 #print(df.head())
 #print(df.shape)
 #
 #df.to_csv(output_file)
-
 ###############################################################################################################
+'''gplates_tools testing code'''
 ### Variables Block for gplates_tools ###
 reconstruction_time = 200.00             # This is the input date for creating the feature point
 filename = "Test"                        # Output filename for use
@@ -76,7 +76,34 @@ feature_file = r"C:\USask Python\Gplates Data\GDUs+Rotation\PlatePolygons2016Con
 rotation_file = r"C:\USask Python\Gplates Data\GDUs+Rotation\T_Rot_Model_PalaeoPlates_20200131be.rot"
 latitude, longitude = -50, 50
 ###############################################################################################################
-'''gplates_tools testing code'''
-# Test file
-present_day = track_point.getPresentDayPoint(feature_file, rotation_file, latitude, longitude, reconstruction_time)
-print(present_day)
+#present_day = track_point.getPresentDayPoint(feature_file, rotation_file, latitude, longitude, reconstruction_time)
+#print(present_day)
+###############################################################################################################
+'''fuzzy_tools testing code'''
+###############################################################################################################
+### Variables Block ###
+test_list = ['Abbott, G. (1997)',
+             'Abbott, G. 1997 , Geology of the Upper Hart river area, eastern Ogilvie mountains, Yukon T()',
+             'Abbott, S.A., Sweet, I.P., Plumb, K.A., Young, D. Cutovinos, A., and Ferenczi, P., 2000, ()',
+             'Ahrendt et al(1983a)',
+             'Ahrendt et al(1983b)',
+             'Ames, D.E., van Breenmen, O. and Scoates, J.S. (2002)',
+             'Ames, D.E., van Breenmen, O. and Scoates, J.S. (2002) 2',
+             ]
+
+reference = 'reference'
+date = time.strftime("%Y%m%d-%H%M%S")    # Date in exact time to attach to output filename 
+output_file = date + '_output.csv'
+###############################################################################################################
+print(fz.levenshtein_ratio_and_distance('Marialite', 'marcasite', ratio_calc = False))
+
+df = pd.DataFrame(test_list, columns=[reference])
+df = fz.create_unique_id(df)
+df = fz.extract_years(df, reference)
+df = fz.extract_authors(df, reference)
+df = fz.find_max_partial_ratio(df, reference, 75)
+poss_duplicates = fz.drop_unique_entries(df)
+
+print(poss_duplicates)
+
+df.to_csv(output_file)

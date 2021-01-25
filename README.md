@@ -1,4 +1,4 @@
-# Usask python code for graduate studies
+# USask Python code for graduate studies
 
 api_tools     :
 
